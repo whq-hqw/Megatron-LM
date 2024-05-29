@@ -7,3 +7,8 @@ build
 slurm*
 logs
 .vscode
+
+.venv
+.python-version
+outputs
+pretrained_models
