@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:experimental
+
+FROM nvcr.io/nvidia/pytorch:24.01-py3
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN sed -i -e 's/^APT/# APT/' -e 's/^DPkg/# DPkg/' \
+      /etc/apt/apt.conf.d/docker-clean
+
+RUN apt-get update && apt-get install -y --no-install-recommends
+
+# instal open-ssh
+RUN apt-get install -y openssh-server
+RUN mkdir /var/run/sshd
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+# SSH login fix. Otherwise user is kicked off after login
+RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+# Add user
+RUN useradd -m -s /bin/bash -G sudo developer
+RUN echo 'developer:password' | chpasswd
+
+RUN pip3 install --no-cache-dir accelerate einops flask-restful nltk pytest pytest-cov pytest_mock sentencepiece wrapt git+https://github.com/fanshiqing/grouped_gemm@v1.1.1 transformers
+RUN pip3 install --no-cache-dir protobuf==3.20.0
+
+EXPOSE 22
+CMD ["/usr/sbin/sshd", "-D"]
